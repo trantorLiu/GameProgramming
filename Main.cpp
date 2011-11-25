@@ -27,6 +27,7 @@ char loopBuff[1024] = "\0";
 void debug_message(char*, char*);
 
 void QuitGame(WORLDid, BYTE, BOOL);
+void CleanDebugBuff(WORLDid, BYTE, BOOL);
 BOOL initLyubu();
 void Reset(WORLDid gID, BYTE code, BOOL value);
 void PlayAction(int skip);
@@ -241,18 +242,19 @@ void GetPosDetail(char *buffer){
 	camera.GetWorldDirection(fDir, uDir);
 	sprintf(buffer, "carmer pos[0] = %f,pos[1] = %f,pos[2] = %f \n", pos[0],pos[1],pos[2]);
 	sprintf(buffer, "%scarmer fDir[0] = %f,fDir[1] = %f,fDir[2] = %f \n", buffer, fDir[0],fDir[1],fDir[2]);
-	sprintf(buffer, "%scarmer uDir[0] = %f,uDir[1] = %f,uDir[2] = %f \n", buffer, fDir[0],fDir[1],fDir[2]);
-	/*
+	sprintf(buffer, "%scarmer uDir[0] = %f,uDir[1] = %f,uDir[2] = %f \n", buffer, uDir[0],uDir[1],uDir[2]);
+	
 	FnActor actor;
 	actor.Object(lyubu);
 	actor.GetWorldPosition(pos);
-	sprintf(buffer, "lyubu pos[0] = %f,pos[1] = %f,pos[2] = %f \n", pos[0],pos[1],pos[2]);	
-	*/
+	sprintf(buffer, "%slyubu pos[0] = %f,pos[1] = %f,pos[2] = %f \n", buffer, pos[0],pos[1],pos[2]);	
+	
 }
 
 BOOL BlindKeys(){
 	FyDefineHotKey(FY_ESCAPE, QuitGame, FALSE);
 	FyDefineHotKey(FY_F1, Reset, FALSE);
+	FyDefineHotKey(FY_F2, CleanDebugBuff, FALSE);
 
 	// define some mouse functions
 	FyBindMouseFunction(LEFT_MOUSE, InitPivot, PivotCam, NULL, NULL);
@@ -267,11 +269,9 @@ BOOL BlindKeys(){
 	return TRUE;
 }
 
-/*
-void KeyboardCommand(WORLDid gID, BYTE code, BOOL value){
-	kc->Command(gID,code,value);
+void CleanDebugBuff(WORLDid gID, BYTE code, BOOL value){
+	debug[0] = '\0';
 }
-*/
 //------------------------------------------------------------------------------------
 // timer callback function which will be invoked by TheFly3D System every 1/30 second
 // C.Wang 0308, 2004
