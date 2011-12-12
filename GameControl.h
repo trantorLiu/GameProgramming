@@ -35,6 +35,9 @@ public:
 	void CamBackOff();
 	void CamPointToActor();
 	int CamRevolution(DIRECTION_CODE code);
+
+	BOOL AppendAttackCode(ATTACK_CODE code);
+	void PlayAction(int skip);
 private:
 	int dir_normalize(float pos[3]);
 	BOOL CamInTop;

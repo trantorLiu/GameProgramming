@@ -10,7 +10,9 @@ Last Updated : 1010, 2004, C.Wang
 ===============================================================*/
 #include "TheFlyWin32.h"
 #include "KeyboardControl.h"
-#include "ActorStateMachine.h"
+#include "LyubuStateMachine.h"
+#include "AIControl.h"
+#include "BattleRoom.h"
 
 int oldX, oldY, oldXM, oldYM, oldXMM, oldYMM;
 
@@ -20,7 +22,10 @@ SCENEid sID;
 OBJECTid nID, cID, lID;
 OBJECTid tID;
 ACTORid lyubu;
+ACTORid donzo;
 KeyboardControl *kc;
+AIControl *npc;
+BattleRoom *bRoom;
 
 char debug[1024] = "\0";
 char loopBuff[1024] = "\0";
@@ -29,13 +34,17 @@ void debug_message(char*, char*);
 void QuitGame(WORLDid, BYTE, BOOL);
 void CleanDebugBuff(WORLDid, BYTE, BOOL);
 BOOL initLyubu();
+BOOL initNPC();
+BOOL initBattleRoom(GameControl *player, AIControl *npc);
+void CharacterInit();
+
 void Reset(WORLDid gID, BYTE code, BOOL value);
 void PlayAction(int skip);
 void GameAI(int);
 void Render(int);
 void GetPosDetail(char *);
 BOOL BlindKeys();
-void KeyboardCommand(WORLDid gID, BYTE code, BOOL value);
+void KeyboardAttackCommand(WORLDid gID, BYTE code, BOOL value);
 
 void InitPivot(WORLDid, int, int);
 void PivotCam(WORLDid, int, int);
@@ -103,8 +112,7 @@ void main(int argc, char **argv)
 	camera.Rotate(X_AXIS, 90.0f, LOCAL);
 	camera.Translate(0.0f, 10.0f, 100.0f, LOCAL);
 	
-	initLyubu();
-
+	CharacterInit();
 	// translate the light
 	FnLight light;
 	light.Object(lID);
@@ -120,6 +128,12 @@ void main(int argc, char **argv)
 
 	// invoke the system
 	FyInvokeTheFly(TRUE);
+}
+
+void CharacterInit(){
+	initLyubu();
+	initNPC();
+	initBattleRoom(kc, npc);
 }
 
 BOOL initLyubu(){ // init Lyubu and Camera
@@ -151,7 +165,7 @@ BOOL initLyubu(){ // init Lyubu and Camera
 		return FALSE;
 	}
 	// set lyubu idle action
-	ACTIONid idleID = actor.GetBodyAction(NULL,"IDLE");
+	ACTIONid idleID = actor.GetBodyAction(NULL,"CombatIdle");
 	//ACTIONid idleID = actor.GetBodyAction(NULL,"WALK");
 	if (idleID == FAILED_ID){
 		sprintf(debug, "%s get action failed\n", debug);
@@ -199,10 +213,61 @@ BOOL initLyubu(){ // init Lyubu and Camera
 
 
 	//kc = new KeyboardControl(lyubu, cID);
-	ActorStateMachine * lyubuState = new ActorStateMachine(lyubu);
+	LyubuStateMachine * lyubuState = new LyubuStateMachine(lyubu);
 	kc = new KeyboardControl(lyubuState, cID);
 	sprintf(debug, "%sactorID=%d cID=%d",debug, lyubu, cID);
 	
+	return TRUE;
+}
+
+BOOL initNPC(){
+	FnWorld gw;
+	gw.Object(gID);
+	gw.SetTexturePath("Data\\NTU4\\Characters");
+	gw.SetCharacterPath("Data\\NTU4\\Characters");
+
+	FnScene scene;
+	scene.Object(sID);
+	donzo = scene.LoadActor("Donzo");
+	if (donzo == FAILED_ID){
+		return FALSE;
+	}
+	FnActor actor;
+	actor.Object(donzo);
+	float pos[3];
+	pos[0] = 3569.0;
+	pos[1] = -3010;
+	pos[2] = 100;
+	actor.SetPosition(pos);
+
+	BOOL flag = actor.PutOnTerrain(tID,FALSE,0.0);
+
+	if (flag == FALSE){
+		sprintf(debug, "%s put on fail\n", debug);
+		return FALSE;
+	}
+	// set donzo idle action
+	ACTIONid idleID = actor.GetBodyAction(NULL,"CombatIdle");
+	
+	//actor.MakeCurrentAction(0,NULL,idleID,0.0,TRUE);
+	//if (actor.MakeCurrentAction(0,NULL,FAILED_ID) == FAILED_ID){
+	if (actor.MakeCurrentAction(0,NULL,idleID) == FAILED_ID){
+		sprintf(debug, "%s make current fail\n", debug);
+	}else{
+		sprintf(debug, "%s make action success\n", debug);
+	}
+	
+	if (actor.Play(0,START, 0.0, FALSE,TRUE) == FALSE){
+		sprintf(debug, "%s play action failed\n", debug);
+	}
+	
+	npc = new AIControl();
+	npc->AddNPC(donzo);
+	return TRUE;
+}
+
+BOOL initBattleRoom(GameControl *player, AIControl *npc){
+	bRoom = new BattleRoom(player->mainChar, npc->npcStateMachineList);
 	return TRUE;
 }
 
@@ -212,24 +277,32 @@ void Reset(WORLDid gID, BYTE code, BOOL value){
 			FnScene scene;
 			scene.Object(sID);
 			scene.DeleteActor(lyubu);
+			scene.DeleteActor(donzo);
 			debug[0] = '\0';
 			ActorStateMachine * lyubuState = kc->mainChar;
 			delete lyubuState;
 			delete kc;
-			initLyubu();
+			delete npc;
+			delete bRoom;
+			CharacterInit();
+			//initLyubu();
+			//initNPC();
 		}
-	}
-	
+	}	
 }
-void PlayAction(int skip){
-	FnActor actor;
-	actor.Object(lyubu);
-	
-	if (actor.Play(0,LOOP, (float)skip, FALSE,TRUE) == FALSE){
-		//sprintf(debug, "%s play action failed\n", debug);
-	}else{
-		//sprintf(debug, "%s played\n", debug);
+
+void KeyboardAttackCommand(WORLDid gID, BYTE code, BOOL value){
+	if (code == FY_J && FyCheckHotKeyStatus(FY_J) == TRUE){
+		kc->AppendAttackCode(NORMAL_ATT);
+	}else if(code == FY_K && FyCheckHotKeyStatus(FY_K) == TRUE){
+		kc->AppendAttackCode(HEAVY_ATT);
 	}
+}
+
+void PlayAction(int skip){
+	kc->PlayAction(skip);
+	npc->PlayAction(skip);
+	//bRoom->RefreshArena();
 }
 
 void GetPosDetail(char *buffer){
@@ -261,11 +334,9 @@ BOOL BlindKeys(){
 	FyBindMouseFunction(MIDDLE_MOUSE, InitZoom, ZoomCam, NULL, NULL);
 	FyBindMouseFunction(RIGHT_MOUSE, InitMove, MoveCam, NULL, NULL);
 
-	//test keyboard control obj
-	//FyDefineHotKey(FY_W, KeyboardCommand, FALSE);
-	//FyDefineHotKey(FY_A, KeyboardCommand, FALSE);
-	//FyDefineHotKey(FY_S, KeyboardCommand, FALSE);
-	//FyDefineHotKey(FY_D, KeyboardCommand, FALSE);
+	FyDefineHotKey(FY_J, KeyboardAttackCommand, FALSE);
+	//FyDefineHotKey(FY_J, KeyboardAttackCommand, TRUE);
+	FyDefineHotKey(FY_K, KeyboardAttackCommand, FALSE);
 	return TRUE;
 }
 
@@ -279,6 +350,7 @@ void CleanDebugBuff(WORLDid gID, BYTE code, BOOL value){
 void GameAI(int skip)
 {
 	kc->Command();
+	bRoom->RefreshArena();
 }
 
 void Render(int skip){

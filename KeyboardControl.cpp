@@ -51,6 +51,7 @@ int KeyboardControl::DirControl(){
 	return 0;
 }
 int KeyboardControl::Command(){//the return value doesn't represent anything.
+	/*
 	if (FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_A) 
 		|| FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_D)){
 		this->DirControl();
@@ -60,7 +61,13 @@ int KeyboardControl::Command(){//the return value doesn't represent anything.
 		this->CharacterSetIdle();
 		//sprintf(debug ,"in else condition\n");
 	}
-
-
+	*/
+	if (FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_A) 
+		|| FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_D)){
+		this->DirControl();
+	}else{
+		//this->CharacterSetIdle();
+		this->mainChar->CharacterSetIdle();
+	}
 	return 0;
 }

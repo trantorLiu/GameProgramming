@@ -55,19 +55,30 @@ BOOL GameControl::CharacterMoveForward(DIRECTION_CODE code){
 	}
 }
 
+BOOL GameControl::AppendAttackCode(ATTACK_CODE code){
+	return this->mainChar->AppendAttackCode(code);
+}
+
 BOOL GameControl::CharacterNormalAttack(){
-	if (this->mainChar->state == STATEBEATTACK){
+	/*
+	if (this->mainChar->state == STATEDAMAGE){
 		return FALSE;
 	}
 	this->mainChar->ChangeState(STATEATTACK);
 	sprintf(debug ,"%d attacking\n",this->mainChar->character);
+	*/
 	return TRUE;
 }
 
+/*
 BOOL GameControl::CharacterSetIdle(){
-	this->mainChar->ChangeState(STATEIDLE);
+	if (this->mainChar->CanBeControl){
+		this->mainChar->ChangeState(STATEIDLE);
+		return TRUE;
+	}
 	return TRUE;
 }
+*/
 
 int GameControl::GenerateTargetDir(DIRECTION_CODE code){
 	FnCamera cam;
@@ -295,7 +306,7 @@ void GameControl::CamBackOff() {
 	
 	cam.SetWorldDirection(tempFDir,tempUDir);
 	float dis = (cam_pos[0] - ly_pos[0]) * (cam_pos[0] - ly_pos[0]) + (cam_pos[1] - ly_pos[1]) * (cam_pos[1] - ly_pos[1]);
-	int ret;
+	int ret = 0;
 	if (dis < 129600) {
 		ret = cam.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
 	}
@@ -413,4 +424,17 @@ int GameControl::CamRevolution(DIRECTION_CODE code){
 	cam.MoveForward(MOVE_LENGTH,TRUE,FALSE,0.0f,TRUE);
 	cam.PutOnTerrain(tID,FALSE,cPos[2]);
 	return 0;
+}
+
+void GameControl::PlayAction(int skip){
+	this->mainChar->PlayAction(skip);
+	/*
+	FnActor actor;
+	actor.Object(this->mainChar->character);
+	if (this->mainChar->CanBeControl() == TRUE){
+		actor.Play(0,LOOP, (float)skip, FALSE,TRUE);
+	}else if (this->state == STATEATTACK){
+		this->
+	}*/
+	//return TRUE;
 }
