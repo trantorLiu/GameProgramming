@@ -13,8 +13,8 @@ AIControl::~AIControl(void)
 	}
 }
 
-int AIControl::AddNPC(ACTORid npc){
-	ActorStateMachine* stm = new ActorStateMachine(npc);
+int AIControl::AddNPC(ACTORid npc, char * ActionFilename){
+	ActorStateMachine* stm = new ActorStateMachine(npc, ActionFilename);
 	this->npcStateMachineList.push_back(stm);
 	return 0;
 }

@@ -175,8 +175,6 @@ BOOL initLyubu(){ // init Lyubu and Camera
 		sprintf(debug, "%s get action success\n", debug);
 	}
 	
-	//actor.MakeCurrentAction(0,NULL,idleID,0.0,TRUE);
-	//if (actor.MakeCurrentAction(0,NULL,FAILED_ID) == FAILED_ID){
 	if (actor.MakeCurrentAction(0,NULL,idleID) == FAILED_ID){
 		sprintf(debug, "%s make current fail\n", debug);
 	}else{
@@ -214,7 +212,7 @@ BOOL initLyubu(){ // init Lyubu and Camera
 
 
 	//kc = new KeyboardControl(lyubu, cID);
-	lyubuState = new LyubuStateMachine(lyubu);
+	lyubuState = new LyubuStateMachine(lyubu, "Data\\LyubuAction.txt");
 	kc = new KeyboardControl(lyubuState, cID);
 	sprintf(debug, "%sactorID=%d cID=%d",debug, lyubu, cID);
 	
@@ -263,7 +261,7 @@ BOOL initNPC(){
 	}
 	
 	npc = new AIControl();
-	npc->AddNPC(donzo);
+	npc->AddNPC(donzo,"Data\\DozonAction.txt");
 	return TRUE;
 }
 

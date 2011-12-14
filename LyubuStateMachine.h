@@ -7,9 +7,11 @@ class LyubuStateMachine :
 public:
 	LyubuStateMachine(void);
 	virtual ~LyubuStateMachine(void);
-	LyubuStateMachine(ACTORid character);
+	LyubuStateMachine(ACTORid character, char *ActionFilename);
 	//virtual BOOL PlayAction(int skip);
 	virtual BOOL PlayAttackAction(int skip);
+protected:
+	virtual BOOL UpdateEffectiveAttack();
 	/*
 	BOOL isNowAttackState(void);	//if now is attack state(i.e. var attackState == true), return true
 	void resetAttackState(void);	//reset var attackState

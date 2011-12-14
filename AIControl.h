@@ -11,7 +11,7 @@ public:
 	std::vector<ActorStateMachine *> npcStateMachineList;
 	AIControl(void);
 	virtual ~AIControl(void);
-	int AddNPC(ACTORid ncp);
+	int AddNPC(ACTORid ncp, char * ActionFilename);
 	void PlayAction(int skip);
 };
 

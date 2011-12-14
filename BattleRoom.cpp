@@ -63,7 +63,7 @@ void BattleRoom::PerformAttack(){
 	if (this->AreanList.empty() == true){// no npc in the arean means that no attack exists.
 		return;
 	}
-	if (playerStateMachine->state == STATEATTACK ){
+	if (playerStateMachine->state == STATEATTACK && playerStateMachine->effectiveAttack == TRUE ){
 		if (this->playerStateMachine->newAttack == TRUE){
 			this->playerStateMachine->newAttack = FALSE;
 			this->playerHitMap.clear();
