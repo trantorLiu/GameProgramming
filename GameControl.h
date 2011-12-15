@@ -17,7 +17,8 @@ public:
 	ActorStateMachine *mainChar;
 	OBJECTid camera;
 	float dir[3];
-	float actorOldPosition[3];
+	//float actorOldPosition[3];
+	float cameraTargetPos[3];
 public:
 	GameControl(void);
 	virtual ~GameControl(void);
@@ -32,11 +33,12 @@ public:
 	int GenerateTargetDir(DIRECTION_CODE code);	//return the angle from CalcLeftRight()
 	int Rotate(float theta, float vector[2]);
 	void CalcLeftRight(DIRECTION_CODE code);	//return the angle the object should turn
-	void CamFallow();
-	void CamBackOff();
+	//void CamFallow();
+	//void CamBackOff();
 	void CamPointToActor();
 	int CamRevolution(DIRECTION_CODE code);
-
+	void CamUpdate();
+	void InitCamTargetPos(float pos[3]);
 	BOOL AppendAttackCode(ATTACK_CODE code);
 	void PlayAction(int skip);
 private:

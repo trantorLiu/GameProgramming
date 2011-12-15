@@ -211,9 +211,10 @@ BOOL initLyubu(){ // init Lyubu and Camera
 	actor.SetWorldDirection(fDir,uDir);
 
 
-	//kc = new KeyboardControl(lyubu, cID);
+	actor.GetWorldPosition(pos);
 	lyubuState = new LyubuStateMachine(lyubu, "Data\\LyubuAction.txt");
 	kc = new KeyboardControl(lyubuState, cID);
+	kc->InitCamTargetPos(pos);
 	sprintf(debug, "%sactorID=%d cID=%d",debug, lyubu, cID);
 	
 	return TRUE;
@@ -301,7 +302,6 @@ void KeyboardAttackCommand(WORLDid gID, BYTE code, BOOL value){
 void PlayAction(int skip){
 	kc->PlayAction(skip);
 	npc->PlayAction(skip);
-	kc->CamPointToActor();
 	/*
 	if (lyubuState->isNowAttackState()) {
 		kc->CamFallow();
@@ -357,6 +357,7 @@ void GameAI(int skip)
 {
 	kc->Command();
 	bRoom->RefreshArena();
+	kc->CamPointToActor();
 }
 
 void Render(int skip){

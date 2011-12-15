@@ -7,6 +7,10 @@
 #define CAM_MAX_HIGHT 300.0f
 extern char debug[1024];
 extern OBJECTid tID;
+
+#define DISTANCE 360.0f
+#define RADIUS 25.0f
+#define RADIUS2 625.0f
 //extern ACTORid lyubu;
 
 BOOL firstBlock = TRUE;
@@ -41,9 +45,9 @@ BOOL GameControl::CharacterMoveForward(DIRECTION_CODE code){
 
 	// please check "beBlock" and decide what to do.
 	if (code == MOVE_FORWARD) {
-		GameControl::CamFallow();
+		//GameControl::CamFallow();
 	}else if (code == MOVE_BACK) {
-		GameControl::CamBackOff();
+		//GameControl::CamBackOff();
 	}else if ((code == MOVE_LEFT || code == MOVE_RIGHT) && beBlock == TRUE){
 		GameControl::CamRevolution(code);
 	}
@@ -86,19 +90,20 @@ int GameControl::GenerateTargetDir(DIRECTION_CODE code){
 	float camPos[3];
 	cam.GetWorldPosition(camPos);
 
-	FnActor act;
-	act.Object(this->mainChar->character);
-	float actPos[3];
-	act.GetWorldPosition(actPos);
+	//FnActor act;
+	//act.Object(this->mainChar->character);
+	//float actPos[3];
+	//act.GetWorldPosition(actPos);
 	if (code == MOVE_FORWARD){
 		for (int i = 0; i< 2;i++) {
-			this->dir[i] = actPos[i] - camPos[i];
+			//this->dir[i] = actPos[i] - camPos[i];
+			this->dir[i] = this->cameraTargetPos[i] - camPos[i];
 		}
 		this->dir[2] = 0.0f;
 		this->dir_normalize(this->dir);
 	}else if (code == MOVE_BACK){
 		for (int i = 0; i< 2;i++) {
-			this->dir[i] = camPos[i] - actPos[i] ;
+			this->dir[i] = camPos[i] - this->cameraTargetPos[i] ;
 		}
 		this->dir[2] = 0.0f;
 		this->dir_normalize(this->dir);
@@ -228,130 +233,17 @@ int GameControl::Rotate(float theta, float vector[2]){
 	return 0;
 }
 
-void GameControl::CamFallow() {
-	float cam_pos[3], ly_pos[3];
-	FnActor actor;
-	actor.Object(this->mainChar->character);
-	
-	FnObject cam;
-	cam.Object(this->camera);
-
-	float fDir[3], uDir[3];
-	float tempFDir[3], tempUDir[3];
-	
-	cam.GetWorldDirection(fDir,uDir);
-
-	tempFDir[0] = fDir[0];
-	tempFDir[1] = fDir[1];
-	tempFDir[2] = 0.0;
-	tempUDir[0] = 0.0;
-	tempUDir[1] = 0.0;
-	tempUDir[2] = uDir[2];
-
-	cam.SetWorldDirection(tempFDir,tempUDir);
-	actor.GetWorldPosition(ly_pos);
-	cam.GetWorldPosition(cam_pos);
-	
-	float dis = (cam_pos[0] - ly_pos[0]) * (cam_pos[0] - ly_pos[0]) + (cam_pos[1] - ly_pos[1]) * (cam_pos[1] - ly_pos[1]);
-	//sprintf(debug, "%s distance between camera and lyubu is %f\n", debug, dis);
-	if (dis > 129600) {
-		//cam.MoveForward(MOVE_LENGTH,TRUE, FALSE, 0.0, FALSE);
-		cam.MoveForward(MOVE_LENGTH,FALSE, FALSE, 0.0, FALSE);
-	}
-	
-	BOOL flag;
-	if (cam_pos[2] - MOVE_LENGTH / 2.0 > CAM_MIN_HIGHT){
-		flag = cam.PutOnTerrain(tID,FALSE, cam_pos[2] - MOVE_LENGTH / 2.0);
-	}else{
-		this->CamInTop = FALSE;
-		flag = cam.PutOnTerrain(tID,FALSE, CAM_MIN_HIGHT);
-	}
-	//BOOL flag = cam.PutOnTerrain(tID,FALSE,115.0);
-
-	if (flag == FALSE) {
-		sprintf(debug, "%s put on fail\n", debug);
-	}
-	
-	fDir[2] = -0.2;
-	uDir[1] = 0.2;
-	cam.SetWorldDirection(fDir,uDir);
-	
-	firstBlock = TRUE;
-}
-void GameControl::CamBackOff() {
-	FnObject cam;
-	cam.Object(this->camera);
-	
-
-	float fDir[3], uDir[3];
-	float tempFDir[3], tempUDir[3];
-	
-	cam.GetWorldDirection(fDir,uDir);
-
-	tempFDir[0] = fDir[0];
-	tempFDir[1] = fDir[1];
-	tempFDir[2] = 0.0;
-	tempUDir[0] = 0.0;
-	tempUDir[1] = 0.0;
-	tempUDir[2] = uDir[2];
-
-	//sprintf(debug, "%s %f,%f,%f\n", debug, tempFDir[0],tempFDir[1], tempFDir[2]);
-	//sprintf(debug, "%s %f,%f,%f\n", debug, tempUDir[0],tempUDir[1], tempUDir[2]);
-	FnActor actor;
-	actor.Object(this->mainChar->character);
-	float ly_pos[3];
-	float cam_pos[3];
-	actor.GetWorldPosition(ly_pos);
-	cam.GetWorldPosition(cam_pos);
-	
-	cam.SetWorldDirection(tempFDir,tempUDir);
-	float dis = (cam_pos[0] - ly_pos[0]) * (cam_pos[0] - ly_pos[0]) + (cam_pos[1] - ly_pos[1]) * (cam_pos[1] - ly_pos[1]);
-	int ret = 0;
-	if (dis < 129600) {
-		ret = cam.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
-	}
-
-	BOOL flag;
-	if (ret == 0){
-		flag = cam.PutOnTerrain(tID,FALSE,CAM_MIN_HIGHT);
-	}else{
-		if (firstBlock == TRUE){
-			cam.MoveForward(-0.1, FALSE, FALSE, 0.0, TRUE);	//prevent the actor be under the camera, or it can't go out there
-			firstBlock = FALSE;
-		}
-		//sprintf(debug, "%s Camera is blocked\n", debug);
-		float pos[3];
-		cam.GetWorldPosition(pos);
-		if (pos[2] > CAM_MAX_HIGHT) {
-			flag = cam.PutOnTerrain(tID,FALSE,CAM_MAX_HIGHT);
-			cam.GetWorldPosition(pos);
-		}
-		else {
-			this->CamInTop = TRUE;
-			flag = cam.PutOnTerrain(tID,FALSE,pos[2] + MOVE_LENGTH / 2);
-		}
-	}
-
-	if (flag == FALSE) {
-		sprintf(debug, "%s put on fail\n", debug);
-	}
-	
-	fDir[2] = -0.2;
-	uDir[1] = 0.2;
-	cam.SetWorldDirection(fDir,uDir);
-
-}
-
 void GameControl::CamPointToActor() {
-	sprintf(debug ,"in point to actor\n");
+	//sprintf(debug ,"in point to actor\n");
+	this->CamUpdate();
 
-	float aPos[3], cPos[3];
+	float cPos[3];
 	float aFDir[3], aUDir[3];
 	float vec[3] = {0};	//vector point to actor from camera
 
 	FnActor act;
 	act.Object(this->mainChar->character);
-	act.GetWorldPosition(aPos);
+	//act.GetWorldPosition(aPos);
 	
 	act.GetWorldDirection(aFDir, aUDir);
 	
@@ -360,26 +252,14 @@ void GameControl::CamPointToActor() {
 	cam.GetWorldPosition(cPos);
 	
 	/*
-	float movedDistance = sqrt((aPos[0] - actorOldPosition[0]) * (aPos[0] - actorOldPosition[0])
-		+ (aPos[1] - actorOldPosition[1]) * (aPos[1] - actorOldPosition[1])
-		+ (aPos[2] - actorOldPosition[2]) * (aPos[0] - actorOldPosition[2]));
-	sprintf(debug ,"%s\nmoved distance=%f\n", debug, movedDistance);
-	sprintf(debug ,"%s\nold position: %f %f %f\n", debug, actorOldPosition[0], actorOldPosition[1], actorOldPosition[2]);
-	sprintf(debug ,"%s\nnow position: %f %f %f\n", debug, aPos[0], aPos[1], aPos[2]);
-	if (movedDistance < 15) {
-		return;
-	} else {
-		this->actorOldPosition[0] = aPos[0];
-		this->actorOldPosition[1] = aPos[1];
-		this->actorOldPosition[2] = aPos[2];
-	}
-	*/
-	
-
-
 	vec[0] = aPos[0] - cPos[0];
 	vec[1] = aPos[1] - cPos[1];
 	vec[2] = (aPos[2] + 40) - cPos[2];	//the height of actor is about 40
+	*/
+	// the camera should look at cameraTargetPos, not the actor.
+	vec[0] = cameraTargetPos[0] - cPos[0];
+	vec[1] = cameraTargetPos[1] - cPos[1];
+	vec[2] = (cameraTargetPos[2] + 40) - cPos[2];	//the height of actor is about 40
 	dir_normalize(vec);
 	//vec[2] = -0.2;
 
@@ -402,8 +282,8 @@ int GameControl::CamRevolution(DIRECTION_CODE code){
 	}
 	FnActor act;
 	act.Object(this->mainChar->character);
-	float aPos[3];
-	act.GetWorldPosition(aPos);
+	//float aPos[3];
+	//act.GetWorldPosition(aPos);
 
 	FnCamera cam;
 	cam.Object(this->camera);
@@ -414,7 +294,8 @@ int GameControl::CamRevolution(DIRECTION_CODE code){
 	float newVector[2];
 	float r = 0.0f;
 	for (int i = 0;i<2;i++){
-		orig[i] = cPos[i] - aPos[i];
+		//orig[i] = cPos[i] - aPos[i];
+		orig[i] = cPos[i] - this->cameraTargetPos[i];
 		newVector[i] = orig[i];
 		r += orig[i] * orig[i];
 	}
@@ -457,4 +338,99 @@ void GameControl::PlayAction(int skip){
 		this->
 	}*/
 	//return TRUE;
+}
+
+void GameControl::CamUpdate(){
+	float ly_pos[3];
+	FnActor actor;
+	actor.Object(this->mainChar->character);
+	actor.GetWorldPosition(ly_pos);
+
+	float dis = (cameraTargetPos[0] - ly_pos[0]) * (cameraTargetPos[0] - ly_pos[0]) + (cameraTargetPos[1] - ly_pos[1]) * (cameraTargetPos[1] - ly_pos[1]);
+
+	if (dis <= RADIUS2 ){
+		return;
+	}else {
+		//move the cameraTargetPos to reduce the dis. Let ly_pos go back to the cicrle.
+		float deltaL = sqrt(dis) - RADIUS;
+		float dir[3];
+		dir[0] = ly_pos[0] - cameraTargetPos[0];
+		dir[1] = ly_pos[1] - cameraTargetPos[1];
+		dir[2] = 0.0f;
+		this->dir_normalize(dir);
+
+		//then dir[0] will be cosine, dir[1] will be sine
+		//update camerTargetPos
+		cameraTargetPos[0] += deltaL * dir[0];
+		cameraTargetPos[1] += deltaL * dir[1];
+	}
+
+	FnObject cam;
+	cam.Object(this->camera);
+	float cam_pos[3];
+	float fDir[3], uDir[3];
+	float tempFDir[3], tempUDir[3];
+	
+	cam.GetWorldDirection(fDir,uDir);
+
+	tempFDir[0] = fDir[0];
+	tempFDir[1] = fDir[1];
+	tempFDir[2] = 0.0;
+	tempUDir[0] = 0.0;
+	tempUDir[1] = 0.0;
+	tempUDir[2] = uDir[2];
+
+	cam.SetWorldDirection(tempFDir,tempUDir);
+	cam.GetWorldPosition(cam_pos);
+	
+	dis = (cam_pos[0] - cameraTargetPos[0]) * (cam_pos[0] - cameraTargetPos[0]) + (cam_pos[1] - cameraTargetPos[1]) * (cam_pos[1] - cameraTargetPos[1]);
+	//sprintf(debug, "%s distance between camera and lyubu is %f\n", debug, dis);
+	if (dis > 129600) {
+		// move forward
+		cam.MoveForward(MOVE_LENGTH,FALSE, FALSE, 0.0, FALSE);
+		BOOL flag;
+		if (cam_pos[2] - MOVE_LENGTH / 1.2 > CAM_MIN_HIGHT){
+			flag = cam.PutOnTerrain(tID,FALSE, cam_pos[2] - MOVE_LENGTH / 1.2);
+		}else{
+			this->CamInTop = FALSE;
+			flag = cam.PutOnTerrain(tID,FALSE, CAM_MIN_HIGHT);
+		}
+
+		if (flag == FALSE) {
+			sprintf(debug, "%s forward put on fail\n", debug);
+		}
+		firstBlock = TRUE;
+	}else if (dis < 122500){
+		int ret = cam.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
+		BOOL flag;
+		if (ret == 0){
+			flag = cam.PutOnTerrain(tID,FALSE, CAM_MIN_HIGHT);
+		}else{
+			if (firstBlock == TRUE){
+				cam.MoveForward(-0.1, FALSE, FALSE, 0.0, TRUE);	//prevent the actor be under the camera, or it can't go out there
+				firstBlock = FALSE;
+			}
+			//sprintf(debug, "%s Camera is blocked\n", debug);
+			float pos[3];
+			cam.GetWorldPosition(pos);
+			if (pos[2] > CAM_MAX_HIGHT) {
+				flag = cam.PutOnTerrain(tID,FALSE,CAM_MAX_HIGHT);
+				cam.GetWorldPosition(pos);
+			}
+			else {
+				this->CamInTop = TRUE;
+				flag = cam.PutOnTerrain(tID,FALSE,pos[2] + MOVE_LENGTH / 2);
+			}
+		}
+
+		if (flag == FALSE) {
+			sprintf(debug, "%s backoff put on fail\n", debug);
+		}
+	}
+}
+
+void GameControl::InitCamTargetPos(float pos[3]){
+	for (int i = 0;i<3;i++){
+		this->cameraTargetPos[i] = pos[i];
+	}
 }
