@@ -87,7 +87,9 @@ void BattleRoom::PerformAttack(){
 				if (playerHitMap.find(tmpid) == playerHitMap.end()){
 					// get a new victim;
 					sprintf(debug, "%s new victim\n",debug);
-					this->AreanList[i]->ChangeState(STATEDAMAGE,TRUE);
+					if ( this->AreanList[i]->state != STATEDIE){
+						this->AreanList[i]->ChangeState(STATEDAMAGE,TRUE);
+					}
 				}
 				this->playerHitMap[tmpid] = TRUE;
 			}

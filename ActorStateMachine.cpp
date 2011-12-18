@@ -3,6 +3,7 @@
 extern char debug[1024];
 
 using namespace std;
+#define MOVE_LENGTH 20.0
 
 ActorStateMachine::ActorStateMachine(void)
 {
@@ -92,6 +93,9 @@ int ActorStateMachine::ChangeState(ActorState s, BOOL forceSet){
 		}else if (s == STATERUN){
 			this->SetNewAction("Run");
 		}else if (s == STATEDAMAGE){
+			FnActor actor;
+			actor.Object(this->character);
+			actor.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
 			this->SetNewAction("LightDamage");
 			this->life --;
 			sprintf(debug, "%s life=%d\n", debug, this->life);
