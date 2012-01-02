@@ -1,7 +1,9 @@
 Run	Run
 CombatIdle	CombatIdle
 N1	AttackL1
-N2	AttackL2
+N2	AttackL1
+N3	AttackL2
+N4	AttackH
 H1	AttackH
 HeavyDamage	DamageH
 LightDamage	DamageL

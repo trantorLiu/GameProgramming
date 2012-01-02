@@ -31,11 +31,12 @@ void BattleRoom::RefreshArena(){
 	for (int i =0;i< this->npcStateMachineList.size();i++){
 		npc.Object(this->npcStateMachineList[i]->character);
 		npc.GetWorldPosition(npcPos);
+		this->npcStateMachineList[i]->AppendAttackCode(NORMAL_ATT);
 		
 		if (this->CheckDistanceAndState(playerPos, npcPos, 
 				this->playerStateMachine->state, this->npcStateMachineList[i]->state ) == TRUE){
 			this->JoinArena( this->npcStateMachineList[i] );
-			this->npcStateMachineList[i]->ChangeState(STATEATTACK,TRUE);
+			//this->npcStateMachineList[i]->ChangeState(STATEATTACK,TRUE);
 		}
 	}
 	//sprintf(debug, "%s npc state machine list size = %d\n",debug,this->npcStateMachineList.size());
@@ -73,9 +74,9 @@ void BattleRoom::PerformAttack(){
 		FnActor actor;
 		actor.Object(this->playerStateMachine->character);
 		float pPos[3];
-		float pDir[3];
+		//float pDir[3];
 		//float pUDir[3];
-		actor.GetWorldDirection(pDir,NULL);
+		//actor.GetWorldDirection(pDir,NULL);
 		actor.GetWorldPosition(pPos);
 
 		FnActor npc;
@@ -86,20 +87,23 @@ void BattleRoom::PerformAttack(){
 			if (playerHitMap.find(tmpid) == playerHitMap.end()){
 				npc.Object(tmpid);
 				npc.GetWorldPosition(nPos);
-				if (this->AttackCheck(pDir, pPos, nPos, BATTLE_RADIUS / 1.5) == TRUE){// lyubu attack area is the half of Battle raidus
+				int attackPower = this->playerStateMachine->AttackEnemy(nPos);
+				if (attackPower > 0 ){
 					// get a new victim;
 					sprintf(debug, "%s new victim\n",debug);
 					if ( this->AreanList[i]->state != STATEDIE){
-						this->AreanList[i]->ChangeState(STATEDAMAGE,TRUE);
+						this->AreanList[i]->TakeDamage(attackPower, TRUE, pPos);
+						//this->AreanList[i]->ChangeState(STATEDAMAGE,TRUE);
 					}
+					this->playerHitMap[tmpid] = TRUE;
 				}
-				this->playerHitMap[tmpid] = TRUE;
 			}
 		}
 	}// should check the npc's attack;
 }
 
 BOOL BattleRoom::AttackCheck(float attackerDir[3], float attackerPos[3], float vitimPos[3], float attackRange){
+	// will be disable, the function will move to ActorStateMachine::AttackEnemy(float *)
 	float dist = 0.0;
 	for (int i = 0;i< 3;i++){
 		dist += (attackerPos[i] - vitimPos[i]) * (attackerPos[i] - vitimPos[i]);

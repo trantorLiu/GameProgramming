@@ -16,8 +16,11 @@ typedef int ActorState;
 
 #define NORMAL_ATT 0
 #define HEAVY_ATT 1
-
+#define ULTIMATE_ATT 2
 typedef int ATTACK_CODE;
+
+#define OUTSHOT_DIS 100.0
+#define MAX_LIFE 100.0
 
 // actor free meaning it can do anything by the controller.
 // actor stay meaning that it can't be move beacuse of being attacked.
@@ -41,6 +44,8 @@ protected:
 	virtual BOOL PlayAttackAction(int skip);
 	BOOL SetNewAction(std::string systemName);
 	virtual BOOL UpdateEffectiveAttack();
+	OBJECTid bloodID;
+	virtual BOOL initLife();
 public:
 	ActorStateMachine(void);
 	virtual ~ActorStateMachine(void);
@@ -55,5 +60,7 @@ public:
 	BOOL AppendAttackCode(ATTACK_CODE code);
 	virtual BOOL PlayAction(int skip);
 	BOOL CheckEffectiveAttack();
+	virtual int AttackEnemy(float enemyPos[3]);
+	virtual void TakeDamage(float damage, BOOL beShot, float* attackerPos);
 };
 
