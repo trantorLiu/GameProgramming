@@ -348,9 +348,7 @@ void GameControl::CamUpdate(){
 
 	float dis = (cameraTargetPos[0] - ly_pos[0]) * (cameraTargetPos[0] - ly_pos[0]) + (cameraTargetPos[1] - ly_pos[1]) * (cameraTargetPos[1] - ly_pos[1]);
 
-	if (dis <= RADIUS2 ){
-		return;
-	}else {
+	if (dis > RADIUS2){
 		//move the cameraTargetPos to reduce the dis. Let ly_pos go back to the cicrle.
 		float deltaL = sqrt(dis) - RADIUS;
 		float dir[3];
@@ -363,8 +361,65 @@ void GameControl::CamUpdate(){
 		//update camerTargetPos
 		cameraTargetPos[0] += deltaL * dir[0];
 		cameraTargetPos[1] += deltaL * dir[1];
+	}else if (dis <= RADIUS2){
+		return;
 	}
 
+	this->CamMove(1.0f);
+}
+
+void GameControl::InitCamTargetPos(float pos[3]){
+	for (int i = 0;i<3;i++){
+		this->cameraTargetPos[i] = pos[i];
+	}
+}
+
+void GameControl::ResetCamView(){
+	FnActor actor;
+	actor.Object(this->mainChar->character);
+	float pos[3];
+	float fDir[3];
+	float uDir[3];
+	actor.GetWorldDirection(fDir,uDir);
+	actor.GetWorldPosition(pos);
+	this->InitCamTargetPos(pos);
+
+	FnObject cam;
+	cam.Object(this->camera);
+	float camPos[3];
+	camPos[0] = pos[0] - fDir[0] * 100;
+	camPos[1] = pos[1] - fDir[1] * 100;
+	camPos[2] = CAM_MIN_HIGHT; //no effect
+	cam.SetWorldPosition(camPos);
+	this->CamInTop = FALSE;
+	BOOL flag = cam.PutOnTerrain(tID,FALSE, CAM_MIN_HIGHT);
+	if (flag == FALSE) {
+		sprintf(debug, "%s reset cam view put on fail\n", debug);
+	}
+	
+	// the camera should look at cameraTargetPos, not the actor.
+	float vec[3];
+	vec[0] = cameraTargetPos[0] - camPos[0];
+	vec[1] = cameraTargetPos[1] - camPos[1];
+	vec[2] = (cameraTargetPos[2] + 40) - camPos[2];	//the height of actor is about 40
+	dir_normalize(vec);
+	//vec[2] = -0.2;
+
+	float cp[3];	//aUDir cross to vec
+	cp[0] = uDir[1] * vec[2] - uDir[2] * vec[1];
+	cp[1] = uDir[2] * vec[0] - uDir[0] * vec[2];
+	cp[2] = uDir[0] * vec[1] - uDir[1] * vec[0];
+
+	float cUDir[3];	//vec cross to cp
+	cUDir[0] = vec[1] * cp[2] - vec[2] * cp[1];
+	cUDir[1] = vec[2] * cp[0] - vec[0] * cp[2];
+	cUDir[2] = vec[0] * cp[1] - vec[1] * cp[0];
+
+	cam.SetWorldDirection(vec, cUDir);
+	this->CamMove(20.0f);
+}
+
+void GameControl::CamMove(float skip){
 	FnObject cam;
 	cam.Object(this->camera);
 	float cam_pos[3];
@@ -383,11 +438,11 @@ void GameControl::CamUpdate(){
 	cam.SetWorldDirection(tempFDir,tempUDir);
 	cam.GetWorldPosition(cam_pos);
 	
-	dis = (cam_pos[0] - cameraTargetPos[0]) * (cam_pos[0] - cameraTargetPos[0]) + (cam_pos[1] - cameraTargetPos[1]) * (cam_pos[1] - cameraTargetPos[1]);
-	//sprintf(debug, "%s distance between camera and lyubu is %f\n", debug, dis);
+	float dis = (cam_pos[0] - cameraTargetPos[0]) * (cam_pos[0] - cameraTargetPos[0]) + (cam_pos[1] - cameraTargetPos[1]) * (cam_pos[1] - cameraTargetPos[1]);
+
 	if (dis > 129600) {
 		// move forward
-		cam.MoveForward(MOVE_LENGTH,FALSE, FALSE, 0.0, FALSE);
+		cam.MoveForward(MOVE_LENGTH * skip,FALSE, FALSE, 0.0, FALSE);
 		BOOL flag;
 		if (cam_pos[2] - MOVE_LENGTH / 1.2 > CAM_MIN_HIGHT){
 			flag = cam.PutOnTerrain(tID,FALSE, cam_pos[2] - MOVE_LENGTH / 1.2);
@@ -401,7 +456,11 @@ void GameControl::CamUpdate(){
 		}
 		firstBlock = TRUE;
 	}else if (dis < 122500){
-		int ret = cam.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
+		/*
+		if (skip > 1.0){
+			sprintf(debug, "%s skip = %lf move = %lf\n", debug, skip,-MOVE_LENGTH * skip);
+		}*/
+		int ret = cam.MoveForward(-MOVE_LENGTH * skip,TRUE, FALSE, 0.0, TRUE);
 		BOOL flag;
 		if (ret == 0){
 			flag = cam.PutOnTerrain(tID,FALSE, CAM_MIN_HIGHT);
@@ -410,7 +469,7 @@ void GameControl::CamUpdate(){
 				cam.MoveForward(-0.1, FALSE, FALSE, 0.0, TRUE);	//prevent the actor be under the camera, or it can't go out there
 				firstBlock = FALSE;
 			}
-			//sprintf(debug, "%s Camera is blocked\n", debug);
+			sprintf(debug, "%s Camera is blocked\n", debug);
 			float pos[3];
 			cam.GetWorldPosition(pos);
 			if (pos[2] > CAM_MAX_HIGHT) {
@@ -426,11 +485,5 @@ void GameControl::CamUpdate(){
 		if (flag == FALSE) {
 			sprintf(debug, "%s backoff put on fail\n", debug);
 		}
-	}
-}
-
-void GameControl::InitCamTargetPos(float pos[3]){
-	for (int i = 0;i<3;i++){
-		this->cameraTargetPos[i] = pos[i];
 	}
 }

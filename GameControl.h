@@ -41,6 +41,9 @@ public:
 	void InitCamTargetPos(float pos[3]);
 	BOOL AppendAttackCode(ATTACK_CODE code);
 	void PlayAction(int skip);
+	void ResetCamView();
+protected:
+	void CamMove(float skip);
 private:
 	int dir_normalize(float pos[3]);
 	BOOL CamInTop;

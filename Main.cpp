@@ -372,6 +372,8 @@ void KeyboardAttackCommand(WORLDid gID, BYTE code, BOOL value){
 		kc->AppendAttackCode(HEAVY_ATT);
 	}else if(code == FY_L && FyCheckHotKeyStatus(FY_L) == TRUE){
 		kc->AppendAttackCode(ULTIMATE_ATT);
+	}else if (code == FY_N && FyCheckHotKeyStatus(FY_N) == TRUE){
+		kc->ResetCamView();
 	}
 }
 
@@ -429,6 +431,7 @@ BOOL BlindKeys(){
 	FyDefineHotKey(FY_J, KeyboardAttackCommand, FALSE);
 	FyDefineHotKey(FY_K, KeyboardAttackCommand, FALSE);
 	FyDefineHotKey(FY_L, KeyboardAttackCommand, FALSE);
+	FyDefineHotKey(FY_N, KeyboardAttackCommand, FALSE);
 	return TRUE;
 }
 
