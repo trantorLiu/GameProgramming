@@ -81,18 +81,18 @@ void BattleRoom::PerformAttack(){
 
 		FnActor npc;
 		float nPos[3];
-		
+		int beOutShot; 
 		for (int i= 0;i< this->AreanList.size();i++){
 			ACTORid tmpid = AreanList[i]->character;
 			if (playerHitMap.find(tmpid) == playerHitMap.end()){
 				npc.Object(tmpid);
 				npc.GetWorldPosition(nPos);
-				int attackPower = this->playerStateMachine->AttackEnemy(nPos);
+				int attackPower = this->playerStateMachine->AttackEnemy(nPos, &beOutShot);
 				if (attackPower > 0 ){
 					// get a new victim;
 					sprintf(debug, "%s new victim\n",debug);
 					if ( this->AreanList[i]->state != STATEDIE){
-						this->AreanList[i]->TakeDamage(attackPower, TRUE, pPos);
+						this->AreanList[i]->TakeDamage(attackPower, beOutShot, pPos);
 						//this->AreanList[i]->ChangeState(STATEDAMAGE,TRUE);
 					}
 					this->playerHitMap[tmpid] = TRUE;

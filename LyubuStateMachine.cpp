@@ -49,9 +49,9 @@ void LyubuStateMachine::setAttackState(void) {	//set var attackState
 	attackState = TRUE;
 }
 */
+
 BOOL LyubuStateMachine::PlayAttackAction(int skip){
-	//duplicate with parrent's PlayAttackAction
-	//this function can be removed (in future);
+	// the difference from parent function is that this function contain the sound fx
 	FnActor actor;
 	actor.Object(this->character);
 	ACTIONid actionID;
@@ -127,8 +127,16 @@ BOOL LyubuStateMachine::UpdateEffectiveAttack(){
 	actor.Object(this->character);
 	float frame = actor.QueryCurrentFrame(0);
 	//sprintf(debug, "%s frame:%lf\n", debug, frame );
-	if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT){
+	if (this->attackKeyQueue[currentAttackIndex] == ULTIMATE_ATT){
 		if (frame > 20.0){
+			this->newAttack = TRUE;
+			this->effectiveAttack =	TRUE;
+		}
+	}else if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT){
+		if (frame > 20.0){
+			this->effectiveAttack =	TRUE;
+		}else if (frame > 50.0){
+			this->newAttack = TRUE;
 			this->effectiveAttack =	TRUE;
 		}
 	}else if (this->currentAttackIndex > 0){
@@ -141,13 +149,14 @@ BOOL LyubuStateMachine::UpdateEffectiveAttack(){
 	return FALSE;
 }
 
-int LyubuStateMachine::AttackEnemy(float enemyPos[3]){
+int LyubuStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
 	// the return value is the attack power
 	FnActor actor;
 	actor.Object(this->character);
 	float attackerPos[3], attackerDir[3];
 	actor.GetWorldPosition(attackerPos);
 	actor.GetWorldDirection(attackerDir,NULL);
+	float frame = actor.QueryCurrentFrame(0);
 
 	float dist = 0.0;
 	for (int i = 0;i< 3;i++){
@@ -169,11 +178,23 @@ int LyubuStateMachine::AttackEnemy(float enemyPos[3]){
 	}
 	cosine = dotProduct / sqrt(length);
 	//sprintf(debug, "%s cosine = %lf\n",debug,cosine);
+
+	if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT || currentAttackIndex == MAXATTACK -1){
+		*beOutShot = TRUE;
+	}else {
+		*beOutShot = FALSE;
+	}
+
 	if (this->currentAttackIndex == 0){
 		if (this->attackKeyQueue[currentAttackIndex] == ULTIMATE_ATT){
-			sprintf(debug, "%s attack power = %d\n",debug,10);
-			return 10;
-		}else if (cosine > 0.8){
+			if (frame > 100){ // almost finish attack
+				*beOutShot = TRUE;
+				sprintf(debug, "%s attack power = %d\n",debug,10);
+				return 10;
+			}
+			sprintf(debug, "%s attack power = %d\n",debug,1);
+			return 1;
+		}else if (cosine > 0.8){ // normal or heavy attack, only attack the front side enemy
 			sprintf(debug, "%s attack power = %d\n",debug,1);
 			return 1;
 		}

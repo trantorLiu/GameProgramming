@@ -30,7 +30,7 @@ ActorStateMachine::ActorStateMachine(ACTORid character, char * ActionFilename){
 }
 
 BOOL ActorStateMachine::initLife(){
-	this->life = 100;
+	this->life = (int) MAX_LIFE;
 
 	FnScene scene;
 	scene.Object(sID);
@@ -124,10 +124,10 @@ int ActorStateMachine::ChangeState(ActorState s, BOOL forceSet){
 			FnActor actor;
 			actor.Object(this->character);
 			actor.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
-			//this->SetNewAction("LightDamage");
+			this->SetNewAction("LightDamage");
 			this->currentAttackIndex = 0;
 			this->lastAttackIndex = 0;
-			this->SetNewAction("HeavyDamage");
+			//this->SetNewAction("HeavyDamage");
 		}else if (s == STATEDIE){
 			this->SetNewAction("Die");
 		}
@@ -278,7 +278,11 @@ BOOL ActorStateMachine::UpdateEffectiveAttack(){
 	return FALSE;
 }
 
-int ActorStateMachine::AttackEnemy(float enemyPos[3]){
+int ActorStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
+	// beOutShot is a parameter
+	if (beOutShot != NULL){
+		*beOutShot = FALSE;
+	}
 	// the return value is the attack power
 	return FALSE;
 }
@@ -290,17 +294,15 @@ void ActorStateMachine::TakeDamage(float damage, BOOL beShot, float *attackerPos
 	float dir[3];
 	actor.GetWorldPosition(pos);
 	actor.GetWorldDirection(dir, NULL);
-	if (attackerPos !=NULL){
+	if (beShot == TRUE && attackerPos !=NULL){
 		float newDir[3];
 		newDir[0] = attackerPos[0] - pos[0];
 		newDir[1] = attackerPos[1] - pos[1];
 		newDir[2] = 0.0f;
 		actor.SetWorldDirection(newDir,NULL);
-		if (beShot == TRUE){
-			actor.MoveForward(-OUTSHOT_DIS,TRUE, FALSE, 0.0, TRUE);
-		}else{
-			actor.MoveForward(-1.0f,TRUE, FALSE, 0.0, TRUE);
-		}
+		//if (beShot == TRUE){
+			//actor.MoveForward(-OUTSHOT_DIS,TRUE, FALSE, 0.0, TRUE);
+		//}
 		actor.SetWorldDirection(dir,NULL);
 	}
 	this->life -= damage;
