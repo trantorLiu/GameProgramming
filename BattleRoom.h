@@ -15,6 +15,7 @@ protected:
 	std::vector<ActorStateMachine *> npcStateMachineList; // they are candidates, not always in the arean.
 	std::vector<ActorStateMachine *> AreanList;
 	std::map<ACTORid, BOOL> playerHitMap;
+	std::map<ACTORid, BOOL> npcHitMap;
 public:
 	BattleRoom(void);
 	virtual ~BattleRoom(void);

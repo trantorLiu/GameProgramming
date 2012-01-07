@@ -19,8 +19,9 @@ typedef int ActorState;
 #define ULTIMATE_ATT 2
 typedef int ATTACK_CODE;
 
-#define OUTSHOT_DIS 200.0
+#define OUTSHOT_DIS 100.0
 #define MAX_LIFE 1000.0
+#define ROBOT_ATTACKRANGE 18000.0
 
 // actor free meaning it can do anything by the controller.
 // actor stay meaning that it can't be move beacuse of being attacked.

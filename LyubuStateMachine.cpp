@@ -38,17 +38,6 @@ LyubuStateMachine::LyubuStateMachine(ACTORid character, char *ActionFilename):Ac
 		sprintf(debug, "%s audioN2 load failed\n", debug);
 	}
 }
-/*
-BOOL LyubuStateMachine::isNowAttackState(void) {	//if now is attack state(i.e. var attackState == true), return true
-	return attackState;
-}
-void LyubuStateMachine::resetAttackState(void) {	//reset var attackState
-	attackState = FALSE;
-}
-void LyubuStateMachine::setAttackState(void) {	//set var attackState
-	attackState = TRUE;
-}
-*/
 
 BOOL LyubuStateMachine::PlayAttackAction(int skip){
 	// the difference from parent function is that this function contain the sound fx

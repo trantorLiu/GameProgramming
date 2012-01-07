@@ -16,6 +16,7 @@ BattleRoom::BattleRoom(ActorStateMachine *playerStateMachine, vector<ActorStateM
 	this->npcStateMachineList = npcStateMachineList;
 	this->playerStateMachine = playerStateMachine;
 	this->playerHitMap.clear();
+	this->npcHitMap.clear();
 }
 
 void BattleRoom::RefreshArena(){
@@ -66,21 +67,20 @@ void BattleRoom::PerformAttack(){
 	if (this->AreanList.empty() == true){// no npc in the arean means that no attack exists.
 		return;
 	}
+	FnActor actor;
+	actor.Object(this->playerStateMachine->character);
+	float pPos[3];
+
+	FnActor npc;
+	float nPos[3];
+
 	if (playerStateMachine->state == STATEATTACK && playerStateMachine->effectiveAttack == TRUE ){
 		if (this->playerStateMachine->newAttack == TRUE){
 			this->playerStateMachine->newAttack = FALSE;
 			this->playerHitMap.clear();
 		}
-		FnActor actor;
-		actor.Object(this->playerStateMachine->character);
-		float pPos[3];
-		//float pDir[3];
-		//float pUDir[3];
-		//actor.GetWorldDirection(pDir,NULL);
 		actor.GetWorldPosition(pPos);
 
-		FnActor npc;
-		float nPos[3];
 		int beOutShot; 
 		for (int i= 0;i< this->AreanList.size();i++){
 			ACTORid tmpid = AreanList[i]->character;
@@ -99,7 +99,34 @@ void BattleRoom::PerformAttack(){
 				}
 			}
 		}
-	}// should check the npc's attack;
+	}
+	
+	actor.GetWorldPosition(pPos);
+	//this->npcHitMap.clear();
+	for (int i= 0;i< this->AreanList.size();i++){
+		ACTORid tmpid = AreanList[i]->character;
+		if (this->AreanList[i]->newAttack == TRUE){
+			//sprintf(debug, "%s erase\n",debug);
+			this->AreanList[i]->newAttack = FALSE;
+			npcHitMap.erase(tmpid);
+		}
+		if (AreanList[i]->state == STATEATTACK && AreanList[i]->effectiveAttack == TRUE ){
+			if (npcHitMap.find(tmpid) == npcHitMap.end()){ // find nothing
+				npc.Object(tmpid);
+				npc.GetWorldPosition(nPos);
+				BOOL beOutShot;
+
+				int attackPower = this->AreanList[i]->AttackEnemy(pPos, &beOutShot);
+				if (attackPower > 0 ){
+					sprintf(debug, "%s player damage\n",debug);
+					if ( this->playerStateMachine->state != STATEDIE){
+						this->playerStateMachine->TakeDamage(attackPower, beOutShot, pPos);
+					}
+					npcHitMap[tmpid] = TRUE;
+				}
+			}
+		}
+	}
 }
 
 BOOL BattleRoom::AttackCheck(float attackerDir[3], float attackerPos[3], float vitimPos[3], float attackRange){

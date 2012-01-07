@@ -123,11 +123,11 @@ int ActorStateMachine::ChangeState(ActorState s, BOOL forceSet){
 		}else if (s == STATEDAMAGE){
 			FnActor actor;
 			actor.Object(this->character);
-			actor.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
-			this->SetNewAction("LightDamage");
+			//actor.MoveForward(-MOVE_LENGTH,TRUE, FALSE, 0.0, TRUE);
+			//this->SetNewAction("LightDamage");
 			this->currentAttackIndex = 0;
 			this->lastAttackIndex = 0;
-			//this->SetNewAction("HeavyDamage");
+			this->SetNewAction("HeavyDamage");
 		}else if (s == STATEDIE){
 			this->SetNewAction("Die");
 		}
@@ -275,6 +275,28 @@ BOOL ActorStateMachine::CheckEffectiveAttack(){
 	return this->effectiveAttack;
 }
 BOOL ActorStateMachine::UpdateEffectiveAttack(){
+	FnActor actor;
+	actor.Object(this->character);
+	float frame = actor.QueryCurrentFrame(0);
+	//sprintf(debug, "%s frame:%lf\n", debug, frame );
+	if (frame > 10.0){
+		this->effectiveAttack =	TRUE;
+	}
+	/*
+	if (this->attackKeyQueue[currentAttackIndex] == ULTIMATE_ATT){
+		if (frame > 20.0){
+			this->newAttack = TRUE;
+			this->effectiveAttack =	TRUE;
+		}
+	}else if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT){
+		if (frame > 20.0){
+			this->effectiveAttack =	TRUE;
+		}
+	}else if (this->currentAttackIndex > 0){
+		if (frame > 10.0){
+			this->effectiveAttack =	TRUE;
+		}
+	}*/
 	return FALSE;
 }
 
@@ -284,7 +306,52 @@ int ActorStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
 		*beOutShot = FALSE;
 	}
 	// the return value is the attack power
-	return FALSE;
+	FnActor actor;
+	actor.Object(this->character);
+	float attackerPos[3], attackerDir[3];
+	actor.GetWorldPosition(attackerPos);
+	actor.GetWorldDirection(attackerDir,NULL);
+	float frame = actor.QueryCurrentFrame(0);
+
+	float dist = 0.0;
+	for (int i = 0;i< 3;i++){
+		dist += (attackerPos[i] - enemyPos[i]) * (attackerPos[i] - enemyPos[i]);
+	}
+	//sprintf(debug, "%s dist = %lf\n",debug,dist);
+	if ( dist >= ROBOT_ATTACKRANGE ){
+		return 0; // no attack power
+	}
+	float cosine,dotProduct;
+	//float v[3];
+	dotProduct = 0.0;
+	for (int i = 0;i< 3;i++){
+		dotProduct += (enemyPos[i] - attackerPos[i]) * attackerDir[i];
+	}
+	float length = 0.0;
+	for (int i = 0;i< 3;i++){
+		length += (enemyPos[i] - attackerPos[i])* (enemyPos[i] - attackerPos[i]);
+	}
+	cosine = dotProduct / sqrt(length);
+	//sprintf(debug, "%s cosine = %lf\n",debug,cosine);
+
+	if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT || currentAttackIndex == MAXATTACK -1){
+		*beOutShot = TRUE;
+	}else {
+		*beOutShot = FALSE;
+	}
+
+	if (this->currentAttackIndex == 0){
+		if (cosine > 0.8){ // normal or heavy attack, only attack the front side enemy
+			sprintf(debug, "%s attack power = %d\n",debug,1);
+			return 1;
+		}
+	}else if (this->currentAttackIndex <= 3){
+		if (cosine >= 0.0){
+			sprintf(debug, "%s attack power = %d\n",debug,2);
+			return 3;
+		}
+	}
+	return 0;
 }
 
 void ActorStateMachine::TakeDamage(float damage, BOOL beShot, float *attackerPos ){
@@ -301,7 +368,7 @@ void ActorStateMachine::TakeDamage(float damage, BOOL beShot, float *attackerPos
 		newDir[2] = 0.0f;
 		actor.SetWorldDirection(newDir,NULL);
 		//if (beShot == TRUE){
-			//actor.MoveForward(-OUTSHOT_DIS,TRUE, FALSE, 0.0, TRUE);
+			actor.MoveForward(-OUTSHOT_DIS,TRUE, FALSE, 0.0, TRUE);
 		//}
 		actor.SetWorldDirection(dir,NULL);
 	}
