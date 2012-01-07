@@ -44,11 +44,7 @@ BOOL GameControl::CharacterMoveForward(DIRECTION_CODE code){
 	}
 
 	// please check "beBlock" and decide what to do.
-	if (code == MOVE_FORWARD) {
-		//GameControl::CamFallow();
-	}else if (code == MOVE_BACK) {
-		//GameControl::CamBackOff();
-	}else if ((code == MOVE_LEFT || code == MOVE_RIGHT) && beBlock == TRUE){
+	if ((code == MOVE_LEFT || code == MOVE_RIGHT) && beBlock == TRUE){
 		GameControl::CamRevolution(code);
 	}
 	
@@ -469,7 +465,7 @@ void GameControl::CamMove(float skip){
 				cam.MoveForward(-0.1, FALSE, FALSE, 0.0, TRUE);	//prevent the actor be under the camera, or it can't go out there
 				firstBlock = FALSE;
 			}
-			sprintf(debug, "%s Camera is blocked\n", debug);
+			//sprintf(debug, "%s Camera is blocked\n", debug);
 			float pos[3];
 			cam.GetWorldPosition(pos);
 			if (pos[2] > CAM_MAX_HIGHT) {

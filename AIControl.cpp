@@ -29,8 +29,10 @@ void AIControl::PlayAction(int skip){
 }
 void AIControl::moveTowardLyubu() {
 	for (int i = 0;i< this->npcStateMachineList.size(); i++){
+		if (npcStateMachineList[i]->CanBeControl() == FALSE){
+			continue;
+		}
 		int npcId = npcStateMachineList[i]->character;
-
 		FnActor lyubu;
 		FnActor npc;
 		lyubu.Object(this->lyubuId);
@@ -44,8 +46,8 @@ void AIControl::moveTowardLyubu() {
 
 		float distance;
 		distance = sqrt((npcPos[0] - lyubuPos[0]) * (npcPos[0] - lyubuPos[0]) 
-			+ (npcPos[0] - lyubuPos[0])	* (npcPos[0] - lyubuPos[0]) 
-			+ (npcPos[0] - lyubuPos[0]) * (npcPos[0] - lyubuPos[0]));
+			+ (npcPos[1] - lyubuPos[1])	* (npcPos[1] - lyubuPos[1]));
+			//+ (npcPos[0] - lyubuPos[0]) * (npcPos[0] - lyubuPos[0]));
 		
 		//sprintf(debug, "%s distance = %f\n",debug,distance);
 
@@ -77,10 +79,11 @@ void AIControl::moveTowardLyubu() {
 			npcStateMachineList[i]->ChangeState(STATERUN, FALSE);
 		}
 		else if (distance <= ATTACK_DISTANCE) {
+			//sprintf(debug, "%s distance = %f\n",debug,distance);
 			npcStateMachineList[i]->AppendAttackCode(NORMAL_ATT);
 		}
 		else {
-			npcStateMachineList[i]->ChangeState(STATEIDLE, TRUE);
+			npcStateMachineList[i]->ChangeState(STATEIDLE);
 		}
 	}
 }
