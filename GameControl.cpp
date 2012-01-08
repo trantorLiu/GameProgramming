@@ -3,7 +3,7 @@
 
 #define FLOAT_ERROR 0.001
 #define MOVE_LENGTH 10.0
-#define CAM_MIN_HIGHT 115.0f
+#define CAM_MIN_HIGHT 80.0f
 #define CAM_MAX_HIGHT 300.0f
 extern char debug[1024];
 extern OBJECTid tID;

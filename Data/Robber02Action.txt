@@ -5,6 +5,7 @@ N2	NormalAttack1
 N3	NormalAttack2
 N4	HeavyAttack1
 H1	HeavyAttack1
-HeavyDamage	Damage2
-LightDamage	Damage1
+HeavyDamage	Damage1
+LightDamage	Damage2
 Die	Dead
+Guard	Dead

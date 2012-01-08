@@ -42,9 +42,6 @@ void AIControl::PlayAction(int skip){
 }
 void AIControl::moveTowardLyubu() {
 	for (int i = 0;i< this->npcStateMachineList.size(); i++){
-		if (this->npcStateMachineList[i]->state == STATEDIE){
-		
-		}
 		if (npcStateMachineList[i]->CanBeControl() == FALSE){
 			continue;
 		}
@@ -121,11 +118,21 @@ void AIControl::moveTowardLyubu() {
 			//sprintf(debug, "%s distance = %f\n",debug,distance);
 			srand ( time(NULL) + i);
 			float rate = rand() % 100;
-			if (rate > GUARD_RATE) {
-				npcStateMachineList[i]->AppendAttackCode(NORMAL_ATT);
-			}
-			else {
-				npcStateMachineList[i]->CharacterSetGuard();
+			if (this->npcStateMachineList[i] == this->bossStateMachine){
+				if (rate > GUARD_RATE ) {
+					npcStateMachineList[i]->AppendAttackCode(NORMAL_ATT);
+					npcStateMachineList[i]->AppendAttackCode(NORMAL_ATT);
+					npcStateMachineList[i]->AppendAttackCode(HEAVY_ATT);
+				}else{
+					npcStateMachineList[i]->CharacterSetGuard();
+				}
+			}else {
+				if (rate > GUARD_RATE * 2) {
+					npcStateMachineList[i]->AppendAttackCode(NORMAL_ATT);
+				}
+				else{
+					npcStateMachineList[i]->CharacterSetIdle();
+				}
 			}
 		}
 		else {
