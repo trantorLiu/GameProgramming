@@ -2,6 +2,9 @@
 
 extern char debug[1024];
 extern SCENEid sID;
+extern WORLDid gID;
+extern AUDIOid audioG;
+extern AUDIOid audioD;
 using namespace std;
 #define MOVE_LENGTH 20.0
 
@@ -15,6 +18,12 @@ ActorStateMachine::~ActorStateMachine(void)
 	FnScene scene;
 	scene.Object(sID);
 	scene.DeleteObject(this->bloodID);
+	/*
+	FnWorld gw;
+	gw.Object(gID);
+	gw.DeleteAudio(audioG);
+	gw.DeleteAudio(audioD);
+	*/
 }
 
 ActorStateMachine::ActorStateMachine(ACTORid character, char * ActionFilename){
@@ -27,6 +36,25 @@ ActorStateMachine::ActorStateMachine(ACTORid character, char * ActionFilename){
 	this->effectiveAttack = FALSE;
 	this->initActionIDMap(ActionFilename);
 	this->initLife();
+	/*
+	FnWorld gw;
+	gw.Object(gID);
+	gw.SetAudioPath("Data\\Audio");
+	audioG = gw.CreateAudio();
+	FnAudio audio;
+	audio.Object(audioG);
+	BOOL beA = audio.Load("guard");   // au_bullet.hit1.wav
+	if (beA == FALSE){
+		sprintf(debug, "%s guard load failed\n", debug);
+	}
+
+	audioD = gw.CreateAudio();
+	audio.Object(audioD);
+	beA = audio.Load("damage");   // au_bullet.hit1.wav
+	if (beA == FALSE){
+		sprintf(debug, "%s damage load failed\n", debug);
+	}
+	*/
 }
 
 BOOL ActorStateMachine::initLife(){
@@ -95,13 +123,7 @@ BOOL ActorStateMachine::CanAttack(){
 }
 
 BOOL ActorStateMachine::CanBeControl(){
-	/*
-	if (this->state == STATEATTACK || this->state == STATEBEATTACK){
-		return FALSE;
-	}else{
-		return TRUE;
-	}*/
-	if (this->state == STATEIDLE || this->state == STATERUN){
+	if (this->state == STATEIDLE || this->state == STATERUN || this->state == STATEGUARD){
 		return TRUE;
 	}else {
 		return FALSE;
@@ -115,7 +137,7 @@ int ActorStateMachine::ChangeState(ActorState s, BOOL forceSet){
 		this->state = s;
 	}
 
-	if (s == STATEIDLE || s == STATERUN || s == STATEDAMAGE || s == STATEDIE){
+	if (s == STATEIDLE || s == STATERUN || s == STATEDAMAGE || s == STATEDIE ||s == STATEGUARD){
 		if (s == STATEIDLE){
 			this->SetNewAction("CombatIdle");
 		}else if (s == STATERUN){
@@ -130,12 +152,43 @@ int ActorStateMachine::ChangeState(ActorState s, BOOL forceSet){
 			this->SetNewAction("HeavyDamage");
 		}else if (s == STATEDIE){
 			this->SetNewAction("Die");
+		}else if (s == STATEGUARD){
+			this->SetNewAction("Guard");
 		}
 	}else if (s == STATEATTACK){
 		// Serial attack start;
 		this->startAttack = TRUE;
+	}else if (s == STATEVANISH){
+		FnWorld gw;
+		gw.Object(gID);
+		gw.SetTexturePath("Data\\FXs\\Textures");
+		gw.SetObjectPath("Data\\FXs\\Models");
+
+		float pos[3];
+		FnActor actor;
+		actor.Object(this->character);
+		actor.GetWorldPosition(pos);
+
+		fxDie = new eF3DFX(sID);
+		fxDie->SetWorkPath("Data\\FXs");
+		BOOL beOK = fxDie->Load("dust3");
+		eF3DBaseFX *fx;
+		int i, numFX = fxDie->NumberFXs();
+		for (i = 0; i < numFX; i++) {
+			fx = fxDie->GetFX(i);
+			fx->InitPosition(pos);
+		}
 	}
 	return 0;
+}
+
+BOOL ActorStateMachine::CharacterSetGuard(){
+	if (this->CanBeControl() == TRUE){
+		this->ChangeState(STATEGUARD);
+		return TRUE;
+	}else{
+		return FALSE;
+	}
 }
 
 BOOL ActorStateMachine::CharacterSetIdle(){
@@ -180,15 +233,29 @@ BOOL ActorStateMachine::PlayAction(int skip){
 	}else if (this->state == STATEDAMAGE){
 		BOOL ret = actor.Play(0,ONCE, (float)skip, TRUE,TRUE);
 		if (ret == FALSE){
-			sprintf(debug, "%s damage end\n",debug);
+			//sprintf(debug, "%s damage end\n",debug);
 			this->ChangeState(STATEIDLE);
 		}
 	}else if (this->state == STATEDIE){
 		BOOL ret = actor.Play(0,ONCE, (float)skip, TRUE,TRUE);
-		/*
+		
 		if (ret == FALSE){
 			sprintf(debug, "%s character die\n",debug);
-		}*/
+			this->ChangeState(STATEVANISH);
+		}
+	}else if (this->state == STATEVANISH){
+		if (this->fxDie != NULL) {
+			BOOL beOK = this->fxDie->Play((float) skip);
+			if (!beOK) {
+				//fxDie->Reset();  // make it from the starting position and play it again
+				// should delete the character
+				delete fxDie;
+				this->fxDie = NULL;
+				FnScene scene;
+				scene.Object(sID);
+				scene.DeleteActor(this->character);
+			}
+		}
 	}
 	return TRUE;
 }
@@ -200,6 +267,7 @@ BOOL ActorStateMachine::PlayAttackAction(int skip){
 
 	char attackName[20] = "\0";
 	if (this->startAttack == TRUE){// first attack
+		this->lastAttackFrame = 0.0f;
 		this->startAttack = FALSE; // reset
 		//sprintf(debug, "%sstart attack\n", debug);
 		if (this->attackKeyQueue[currentAttackIndex] == NORMAL_ATT ){
@@ -219,6 +287,7 @@ BOOL ActorStateMachine::PlayAttackAction(int skip){
 		BOOL ret = actor.Play(0,ONCE, (float)skip, TRUE,TRUE);
 		this->UpdateEffectiveAttack();
 		if (ret == FALSE){
+			this->lastAttackFrame = 0.0f;
 			// play the next one
 			this->effectiveAttack = FALSE;
 			currentAttackIndex++;
@@ -300,10 +369,9 @@ BOOL ActorStateMachine::UpdateEffectiveAttack(){
 	return FALSE;
 }
 
-int ActorStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
-	// beOutShot is a parameter
-	if (beOutShot != NULL){
-		*beOutShot = FALSE;
+int ActorStateMachine::AttackEnemy(float enemyPos[3], SHOT_CODE *shot_code){
+	if (shot_code != NULL){
+		*shot_code = FALSE;
 	}
 	// the return value is the attack power
 	FnActor actor;
@@ -335,9 +403,9 @@ int ActorStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
 	//sprintf(debug, "%s cosine = %lf\n",debug,cosine);
 
 	if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT || currentAttackIndex == MAXATTACK -1){
-		*beOutShot = TRUE;
+		*shot_code = BIG_SHOT;
 	}else {
-		*beOutShot = FALSE;
+		*shot_code = SMALL_SHOT;
 	}
 
 	if (this->currentAttackIndex == 0){
@@ -354,26 +422,45 @@ int ActorStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
 	return 0;
 }
 
-void ActorStateMachine::TakeDamage(float damage, BOOL beShot, float *attackerPos ){
+void ActorStateMachine::TakeDamage(int damage, SHOT_CODE shot_code, float *attackerPos ){
 	FnActor actor;
 	actor.Object(character);
 	float pos[3];
 	float dir[3];
 	actor.GetWorldPosition(pos);
 	actor.GetWorldDirection(dir, NULL);
-	if (beShot == TRUE && attackerPos !=NULL){
+	if ( shot_code != STUCK_SHOT && attackerPos !=NULL){
 		float newDir[3];
 		newDir[0] = attackerPos[0] - pos[0];
 		newDir[1] = attackerPos[1] - pos[1];
 		newDir[2] = 0.0f;
 		actor.SetWorldDirection(newDir,NULL);
-		//if (beShot == TRUE){
+		if (shot_code == BIG_SHOT){
 			actor.MoveForward(-OUTSHOT_DIS,TRUE, FALSE, 0.0, TRUE);
-		//}
+			//sprintf(debug, "%s OUTSHOT_DIS\n", debug);
+		}else if (shot_code == SMALL_SHOT){
+			actor.MoveForward(-SMALL_OUTSHOT_DIS,TRUE, FALSE, 0.0, TRUE);
+			//sprintf(debug, "%s SMALL_OUTSHOT_DIS\n", debug);
+		}
 		actor.SetWorldDirection(dir,NULL);
 	}
+
+	if (this->state == STATEGUARD){
+		FnAudio audio;
+		audio.Object(audioG);
+		audio.Play(ONCE);
+		return; // no damage
+	}else{
+		FnAudio audio;
+		audio.Object(audioD);
+		//if (audio.IsPlaying() == FALSE){
+			audio.Play(ONCE);
+		//}
+		
+
+	}
 	this->life -= damage;
-	sprintf(debug, "%s life=%d\n", debug, this->life);
+	//sprintf(debug, "%s life=%d\n", debug, this->life);
 	if (this->life <= 0) {
 		this->ChangeState(STATEDIE, TRUE);
 	}else {
@@ -384,6 +471,6 @@ void ActorStateMachine::TakeDamage(float damage, BOOL beShot, float *attackerPos
 	blood.Object(bloodID, 0);
 	float size[2];
 	blood.GetSize(size);
-	size[0] = life / MAX_LIFE * 50.0f;
+	size[0] = (float) life / MAX_LIFE * 50.0f;
 	blood.SetSize(size);
 }

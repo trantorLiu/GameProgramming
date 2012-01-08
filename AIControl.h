@@ -13,14 +13,18 @@
 class AIControl
 {
 public:
-	AIControl(int);
+	AIControl(ACTORid id);
 	std::vector<ActorStateMachine *> npcStateMachineList;
+	ActorStateMachine * bossStateMachine;
 	AIControl(void);
 	virtual ~AIControl(void);
 	int AddNPC(ACTORid ncp, char * ActionFilename);
+	int AddBossNPC(ACTORid ncp, char * ActionFilename);
 	void PlayAction(int skip);
 	void moveTowardLyubu();
 private:
-	int lyubuId;
+	ACTORid lyubuId;
+	//ACTORid boss;
+	std::vector<ActorStateMachine *> npcDropList;
 };
 

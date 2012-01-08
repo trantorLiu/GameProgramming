@@ -22,7 +22,7 @@ public:
 	BattleRoom(ActorStateMachine *playerStateMachine, std::vector<ActorStateMachine *> npcStateMachineList);
 	void RefreshArena();
 	void PerformAttack();
-
+	BOOL hurt;
 protected:
 	BOOL JoinArena(ActorStateMachine * npcStm);
 	BOOL CheckDistanceAndState(float playerPos[3], float npcPos[3], ActorState playerState,ActorState npcState );

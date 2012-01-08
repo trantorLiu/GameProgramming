@@ -13,7 +13,7 @@ public:
 	virtual ~LyubuStateMachine(void);
 	LyubuStateMachine(ACTORid character, char *ActionFilename);
 	virtual BOOL PlayAttackAction(int skip);
-	virtual int AttackEnemy(float enemyPos[3], BOOL *beOutShot = NULL);
+	virtual int AttackEnemy(float enemyPos[3], SHOT_CODE *shot_code = NULL);
 protected:
 	virtual BOOL UpdateEffectiveAttack();
 	AUDIOid audioN1;

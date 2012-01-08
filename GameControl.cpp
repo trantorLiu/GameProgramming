@@ -412,7 +412,9 @@ void GameControl::ResetCamView(){
 	cUDir[2] = vec[0] * cp[1] - vec[1] * cp[0];
 
 	cam.SetWorldDirection(vec, cUDir);
-	this->CamMove(20.0f);
+	for (int i= 0;i< 10;i++){
+		this->CamMove(2.0f);
+	}
 }
 
 void GameControl::CamMove(float skip){

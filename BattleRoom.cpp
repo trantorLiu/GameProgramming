@@ -5,6 +5,7 @@ extern char debug[1024];
 
 BattleRoom::BattleRoom(void)
 {
+	this->hurt = TRUE;
 }
 
 
@@ -29,15 +30,16 @@ void BattleRoom::RefreshArena(){
 	actor.GetWorldPosition(playerPos);
 
 	this->AreanList.clear();
-	for (int i =0;i< this->npcStateMachineList.size();i++){
+	for (unsigned int i =0;i< this->npcStateMachineList.size();i++){
+		if (this->npcStateMachineList[i]->state == STATEVANISH){
+			continue;
+		}
 		npc.Object(this->npcStateMachineList[i]->character);
 		npc.GetWorldPosition(npcPos);
-		//this->npcStateMachineList[i]->AppendAttackCode(NORMAL_ATT);
 		
 		if (this->CheckDistanceAndState(playerPos, npcPos, 
 				this->playerStateMachine->state, this->npcStateMachineList[i]->state ) == TRUE){
 			this->JoinArena( this->npcStateMachineList[i] );
-			//this->npcStateMachineList[i]->ChangeState(STATEATTACK,TRUE);
 		}
 	}
 	//sprintf(debug, "%s npc state machine list size = %d\n",debug,this->npcStateMachineList.size());
@@ -82,7 +84,7 @@ void BattleRoom::PerformAttack(){
 		actor.GetWorldPosition(pPos);
 
 		int beOutShot; 
-		for (int i= 0;i< this->AreanList.size();i++){
+		for (unsigned int i= 0;i< this->AreanList.size();i++){
 			ACTORid tmpid = AreanList[i]->character;
 			if (playerHitMap.find(tmpid) == playerHitMap.end()){
 				npc.Object(tmpid);
@@ -90,10 +92,9 @@ void BattleRoom::PerformAttack(){
 				int attackPower = this->playerStateMachine->AttackEnemy(nPos, &beOutShot);
 				if (attackPower > 0 ){
 					// get a new victim;
-					sprintf(debug, "%s new victim\n",debug);
-					if ( this->AreanList[i]->state != STATEDIE){
+					//sprintf(debug, "%s new victim\n",debug);
+					if ( this->AreanList[i]->state != STATEDIE && this->AreanList[i]->state != STATEVANISH){
 						this->AreanList[i]->TakeDamage(attackPower, beOutShot, pPos);
-						//this->AreanList[i]->ChangeState(STATEDAMAGE,TRUE);
 					}
 					this->playerHitMap[tmpid] = TRUE;
 				}
@@ -101,6 +102,9 @@ void BattleRoom::PerformAttack(){
 		}
 	}
 	
+	if (this->hurt == FALSE){
+		return; // player won't get damage.
+	}
 	actor.GetWorldPosition(pPos);
 	//this->npcHitMap.clear();
 	for (int i= 0;i< this->AreanList.size();i++){
@@ -114,13 +118,13 @@ void BattleRoom::PerformAttack(){
 			if (npcHitMap.find(tmpid) == npcHitMap.end()){ // find nothing
 				npc.Object(tmpid);
 				npc.GetWorldPosition(nPos);
-				BOOL beOutShot;
+				int beOutShot;
 
 				int attackPower = this->AreanList[i]->AttackEnemy(pPos, &beOutShot);
 				if (attackPower > 0 ){
-					sprintf(debug, "%s player damage\n",debug);
+					//sprintf(debug, "%s player damage\n",debug);
 					if ( this->playerStateMachine->state != STATEDIE){
-						this->playerStateMachine->TakeDamage(attackPower, beOutShot, pPos);
+						this->playerStateMachine->TakeDamage(attackPower, beOutShot, nPos);
 					}
 					npcHitMap[tmpid] = TRUE;
 				}

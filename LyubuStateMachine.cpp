@@ -43,12 +43,12 @@ BOOL LyubuStateMachine::PlayAttackAction(int skip){
 	// the difference from parent function is that this function contain the sound fx
 	FnActor actor;
 	actor.Object(this->character);
-	ACTIONid actionID;
 
 	//this->setAttackState();
 
 	char attackName[20] = "\0";
 	if (this->startAttack == TRUE){// first attack
+		this->lastAttackFrame = 0.0f;
 		this->startAttack = FALSE; // reset
 		//sprintf(debug, "%sstart attack\n", debug);
 		if (this->attackKeyQueue[currentAttackIndex] == NORMAL_ATT ){
@@ -77,6 +77,7 @@ BOOL LyubuStateMachine::PlayAttackAction(int skip){
 		BOOL ret = actor.Play(0,ONCE, (float)skip, TRUE,TRUE);
 		this->UpdateEffectiveAttack();
 		if (ret == FALSE){
+			this->lastAttackFrame = 0.0f;
 			// play the next one
 			this->effectiveAttack = FALSE;
 			currentAttackIndex++;
@@ -118,16 +119,24 @@ BOOL LyubuStateMachine::UpdateEffectiveAttack(){
 	//sprintf(debug, "%s frame:%lf\n", debug, frame );
 	if (this->attackKeyQueue[currentAttackIndex] == ULTIMATE_ATT){
 		if (frame > 20.0){
-			this->newAttack = TRUE;
+			if (frame - this->lastAttackFrame > 10.0f){
+				this->lastAttackFrame = frame;
+				this->newAttack = TRUE;
+			}
 			this->effectiveAttack =	TRUE;
 		}
 	}else if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT){
-		if (frame > 20.0){
+		if (frame > 60.0f){
+			this->effectiveAttack = FALSE;
+		}else if  (frame > 35.0f && frame <= 60.0f){
+			if (frame - this->lastAttackFrame > 30.0f){// trick
+				this->lastAttackFrame = frame;
+				this->newAttack = TRUE; // another attack
+			}
 			this->effectiveAttack =	TRUE;
-		}else if (frame > 50.0){
-			this->newAttack = TRUE;
+		}else if (frame > 20.0 && frame <= 30.0f){
 			this->effectiveAttack =	TRUE;
-		}
+		} 
 	}else if (this->currentAttackIndex > 0){
 		if (frame > 10.0){
 			this->effectiveAttack =	TRUE;
@@ -138,7 +147,7 @@ BOOL LyubuStateMachine::UpdateEffectiveAttack(){
 	return FALSE;
 }
 
-int LyubuStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
+int LyubuStateMachine::AttackEnemy(float enemyPos[3], SHOT_CODE *shot_code){
 	// the return value is the attack power
 	FnActor actor;
 	actor.Object(this->character);
@@ -169,19 +178,20 @@ int LyubuStateMachine::AttackEnemy(float enemyPos[3], BOOL *beOutShot){
 	//sprintf(debug, "%s cosine = %lf\n",debug,cosine);
 
 	if (this->attackKeyQueue[currentAttackIndex] == HEAVY_ATT || currentAttackIndex == MAXATTACK -1){
-		*beOutShot = TRUE;
+		*shot_code = BIG_SHOT;
 	}else {
-		*beOutShot = FALSE;
+		*shot_code = SMALL_SHOT;
 	}
 
 	if (this->currentAttackIndex == 0){
 		if (this->attackKeyQueue[currentAttackIndex] == ULTIMATE_ATT){
 			if (frame > 100){ // almost finish attack
-				*beOutShot = TRUE;
+				*shot_code = BIG_SHOT;
 				sprintf(debug, "%s attack power = %d\n",debug,10);
 				return 10;
 			}
-			sprintf(debug, "%s attack power = %d\n",debug,1);
+			*shot_code = STUCK_SHOT;
+			//sprintf(debug, "%s attack power = %d\n",debug,1);
 			return 1;
 		}else if (cosine > 0.8){ // normal or heavy attack, only attack the front side enemy
 			sprintf(debug, "%s attack power = %d\n",debug,1);
