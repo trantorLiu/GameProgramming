@@ -74,5 +74,6 @@ public:
 	BOOL CheckEffectiveAttack();
 	virtual int AttackEnemy(float enemyPos[3], SHOT_CODE *shot_code = NULL); // shot_code will be assgin a value after the call
 	virtual void TakeDamage(int damage, SHOT_CODE shot_code, float* attackerPos);
+	void UpdateLifeBillboard(); // billboard
 };
 

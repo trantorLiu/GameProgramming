@@ -528,6 +528,7 @@ void Render(int skip){
 	vp.Render(cID, TRUE, TRUE);
 	PlayAction(skip);
 	GetPosDetail(loopBuff);
+	debug[0] = '\0';
 	debug_message(debug,loopBuff);
 	FnWorld gw;
 	gw.Object(gID);

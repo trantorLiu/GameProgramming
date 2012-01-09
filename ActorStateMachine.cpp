@@ -348,7 +348,7 @@ BOOL ActorStateMachine::UpdateEffectiveAttack(){
 	actor.Object(this->character);
 	float frame = actor.QueryCurrentFrame(0);
 	//sprintf(debug, "%s frame:%lf\n", debug, frame );
-	if (frame > 10.0){
+	if (frame > 15.0){
 		this->effectiveAttack =	TRUE;
 	}
 	/*
@@ -410,12 +410,12 @@ int ActorStateMachine::AttackEnemy(float enemyPos[3], SHOT_CODE *shot_code){
 
 	if (this->currentAttackIndex == 0){
 		if (cosine > 0.8){ // normal or heavy attack, only attack the front side enemy
-			sprintf(debug, "%s attack power = %d\n",debug,1);
+			//sprintf(debug, "%s attack power = %d\n",debug,1);
 			return 1;
 		}
 	}else if (this->currentAttackIndex <= 3){
 		if (cosine >= 0.0){
-			sprintf(debug, "%s attack power = %d\n",debug,2);
+			//sprintf(debug, "%s attack power = %d\n",debug,2);
 			return 3;
 		}
 	}
@@ -466,7 +466,10 @@ void ActorStateMachine::TakeDamage(int damage, SHOT_CODE shot_code, float *attac
 	}else {
 		this->ChangeState(STATEDAMAGE, TRUE);
 	}
+	this->UpdateLifeBillboard();
+}
 
+void ActorStateMachine::UpdateLifeBillboard(){
 	FnBillBoard blood;
 	blood.Object(bloodID, 0);
 	float size[2];
