@@ -187,7 +187,7 @@ int LyubuStateMachine::AttackEnemy(float enemyPos[3], SHOT_CODE *shot_code){
 		if (this->attackKeyQueue[currentAttackIndex] == ULTIMATE_ATT){
 			if (frame > 100){ // almost finish attack
 				*shot_code = BIG_SHOT;
-				sprintf(debug, "%s attack power = %d\n",debug,10);
+				//sprintf(debug, "%s attack power = %d\n",debug,10);
 				return 10;
 			}
 			*shot_code = STUCK_SHOT;
@@ -199,12 +199,12 @@ int LyubuStateMachine::AttackEnemy(float enemyPos[3], SHOT_CODE *shot_code){
 		}
 	}else if (this->currentAttackIndex <= 2){
 		if (cosine >= 0.0){
-			sprintf(debug, "%s attack power = %d\n",debug,2);
+			//sprintf(debug, "%s attack power = %d\n",debug,2);
 			return 2;
 		}
 	}else if (this->currentAttackIndex <= 3){
 		if (cosine >= -1.0){
-			sprintf(debug, "%s attack power = %d\n",debug,2);
+			//sprintf(debug, "%s attack power = %d\n",debug,2);
 			return 3;
 		}
 	}

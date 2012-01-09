@@ -24,6 +24,7 @@ int AIControl::AddNPC(ACTORid npc, char * ActionFilename){
 	ActorStateMachine* stm = new ActorStateMachine(npc, ActionFilename);
 	this->npcStateMachineList.push_back(stm);
 	stm->life = 10;
+	stm->UpdateLifeBillboard();
 	return 0;
 }
 
